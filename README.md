@@ -30,6 +30,18 @@ This service provides a REST API to extract per-token embeddings and multi-head 
    docker run -p 5000:5000 python-sidecar:latest
    ```
 
+### Using Docker Compose
+
+1. Start the service:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. Stop the service:
+   ```bash
+   docker-compose down
+   ```
+
 ### Local Development
 
 1. Create a virtual environment:
@@ -45,8 +57,7 @@ This service provides a REST API to extract per-token embeddings and multi-head 
 
 3. Run the application:
    ```bash
-   cd app
-   uvicorn main:app --host 0.0.0.0 --port 5000 --reload
+   uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
    ```
 
 ## API Endpoints
@@ -126,8 +137,7 @@ Health check endpoint.
 Run tests with pytest:
 
 ```bash
-cd app
-python -m pytest test_main.py -v
+python -m pytest
 ```
 
 The test suite includes:
@@ -139,8 +149,8 @@ The test suite includes:
 ## CI/CD with GitHub Actions
 
 This project includes a GitHub Actions workflow that:
-1. Runs tests on every push and pull request
-2. Builds and tests the Docker image on merges to main
+1. Runs tests on every push
+2. Builds and tests the Docker image on every push
 
 The workflow configuration is in `.github/workflows/python-app.yml`.
 

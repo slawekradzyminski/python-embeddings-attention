@@ -1,20 +1,30 @@
+# Use Python 3.12 slim as the base image
 FROM python:3.12-slim
 
-# Create a working directory
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    TRANSFORMERS_CACHE=/app/.cache/huggingface
+
+# Set the working directory
 WORKDIR /app
 
-# Copy requirements
+# Install system dependencies required for some Python packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy dependency files
 COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY app/ .
-COPY tests/ /app/tests/
+# Copy application code
+COPY app/ ./app
 
-# Expose default port for FastAPI
+# Expose the application port
 EXPOSE 5000
 
-# Run app with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"] 
+# Run FastAPI with Uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
