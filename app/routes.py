@@ -49,21 +49,6 @@ class ReduceResponseData(BaseModel):
     reduced_embeddings: List[List[float]]
     model_name: str
 
-# Legacy models for backward compatibility
-class RequestData(BaseModel):
-    text: str
-    model_name: Optional[str] = "gpt2"
-    dimensionality_reduction: Optional[bool] = False
-    reduction_method: Optional[str] = "pca"
-    n_components: Optional[int] = 2
-
-class ResponseData(BaseModel):
-    tokens: List[str]
-    embeddings: List[List[float]]
-    attention: List[List[List[List[float]]]]
-    reduced_embeddings: Optional[List[List[float]]] = None
-    model_name: str
-
 @router.post("/embeddings", response_model=EmbeddingsResponseData)
 async def get_embeddings(data: EmbeddingsRequestData) -> Dict[str, Any]:
     """
@@ -225,77 +210,6 @@ async def reduce_embeddings(data: ReduceRequestData) -> Dict[str, Any]:
         "model_name": data.model_name
     }
     logger.info(f"Reduced embeddings response summary: {json.dumps(log_response)}")
-    
-    return response
-
-@router.post("/process", response_model=ResponseData, deprecated=True)
-async def process_text(data: RequestData) -> Dict[str, Any]:
-    """
-    Process text through a transformer model and return tokens, embeddings, and attention weights.
-    This endpoint is deprecated. Please use /embeddings, /attention, or /reduce instead.
-    
-    Args:
-        data: Request data containing text and optional parameters
-        
-    Returns:
-        Dictionary with tokens, embeddings, attention weights, and optional reduced embeddings
-    """
-    request_id = str(uuid.uuid4())
-    logger.info(f"[DEPRECATED] Processing text with model {data.model_name}, dimensionality reduction: {data.dimensionality_reduction}")
-    
-    # Get or initialize model
-    if data.model_name not in model_cache:
-        try:
-            model_cache[data.model_name] = ModelService(data.model_name)
-        except Exception as e:
-            error_msg = f"Failed to load model {data.model_name}: {str(e)}"
-            logger.error(error_msg)
-            raise HTTPException(status_code=400, detail=error_msg)
-    
-    service = model_cache[data.model_name]
-    
-    # Process text
-    try:
-        tokens, hidden_states, attentions = service.get_embeddings_and_attention(data.text)
-    except Exception as e:
-        error_msg = f"Error processing text: {str(e)}"
-        logger.error(error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
-    
-    # Optional dimensionality reduction
-    reduced_embeddings = None
-    if data.dimensionality_reduction:
-        try:
-            reducer = DimensionalityReducer(
-                method=data.reduction_method,
-                n_components=data.n_components
-            )
-            reduced = reducer.reduce(hidden_states)
-            reduced_embeddings = reduced.tolist()
-            logger.info(f"Dimensionality reduction successful, shape: {np.array(reduced_embeddings).shape}")
-        except Exception as e:
-            # Don't fail the whole request if reduction fails
-            logger.warning(f"Dimensionality reduction failed: {str(e)}")
-            pass
-    
-    # Prepare response
-    response = {
-        "tokens": tokens,
-        "embeddings": hidden_states.tolist(),
-        "attention": attentions,
-        "reduced_embeddings": reduced_embeddings,
-        "model_name": data.model_name
-    }
-    
-    # Log a summary of the response
-    log_response = {
-        "tokens_count": len(tokens),
-        "embeddings_shape": list(hidden_states.shape),
-        "attention_layers": len(attentions),
-        "reduced_embeddings": "present" if reduced_embeddings is not None else None,
-        "model_name": data.model_name
-    }
-    logger.info(f"Response summary: {json.dumps(log_response)}")
     
     return response
 

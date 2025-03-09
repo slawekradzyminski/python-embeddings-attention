@@ -149,32 +149,6 @@ For 3D visualization, set `n_components` to 3:
 }
 ```
 
-### POST /process (Deprecated)
-
-The original endpoint that returns tokens, embeddings, attention, and optionally reduced embeddings. This endpoint is deprecated and will be removed in a future version. Please use the new endpoints instead.
-
-**Request Body:**
-```json
-{
-  "text": "Hello world, this is a test",
-  "model_name": "gpt2",
-  "dimensionality_reduction": true,
-  "reduction_method": "pca",
-  "n_components": 2
-}
-```
-
-**Response:**
-```json
-{
-  "tokens": ["Hello", "world", "this", "is", "a", "test"],
-  "embeddings": [[...], [...], ...],
-  "attention": [[...], [...], ...],
-  "reduced_embeddings": [[x1, y1], [x2, y2], ...],
-  "model_name": "gpt2"
-}
-```
-
 ### GET /models
 
 List available pre-loaded models.
@@ -208,9 +182,8 @@ python -m pytest
 The test suite includes:
 - Health check endpoint testing
 - Model listing endpoint testing
-- Text processing with and without dimensionality reduction
+- Tests for each endpoint (/embeddings, /attention, /reduce)
 - 2D and 3D dimensionality reduction testing
-- Tests for each new endpoint (/embeddings, /attention, /reduce)
 
 ## CI/CD with GitHub Actions
 
