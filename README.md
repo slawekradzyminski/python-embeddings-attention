@@ -59,6 +59,21 @@ This service provides a REST API to extract per-token embeddings and multi-head 
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
    ```
+   
+   Alternatively, use the provided utility script:
+   ```bash
+   ./restart_server.sh
+   ```
+
+4. To stop the server:
+   ```bash
+   ./kill_server.sh
+   ```
+
+5. To run end-to-end tests:
+   ```bash
+   ./e2e_test.sh
+   ```
 
 ## API Endpoints
 
@@ -184,6 +199,44 @@ The test suite includes:
 - Model listing endpoint testing
 - Tests for each endpoint (/embeddings, /attention, /reduce)
 - 2D and 3D dimensionality reduction testing
+
+### Utility Scripts
+
+The project includes several utility scripts to help with development and testing:
+
+#### Server Management
+
+- **restart_server.sh**: Starts (or restarts) the server on port 5000
+  ```bash
+  ./restart_server.sh
+  ```
+  This script:
+  - Kills any running uvicorn processes
+  - Starts the server on port 5000
+  - Waits until the server is up (max 30 seconds)
+  - Verifies the health and models endpoints are working
+  - Stores the server PID in `.server_pid` for future reference
+
+- **kill_server.sh**: Stops all uvicorn processes
+  ```bash
+  ./kill_server.sh
+  ```
+  This script:
+  - Checks for a `.server_pid` file and kills that specific process
+  - Kills any remaining uvicorn processes
+
+#### End-to-End Testing
+
+- **e2e_test.sh**: Runs end-to-end tests on all endpoints
+  ```bash
+  ./e2e_test.sh
+  ```
+  This script:
+  - Starts the server using `restart_server.sh`
+  - Tests all domain endpoints (embeddings, attention, reduce) with realistic test data
+  - Verifies that responses are successful and make sense
+  - Checks the logs to ensure everything was processed correctly
+  - Stops the server using `kill_server.sh`
 
 ## CI/CD with GitHub Actions
 

@@ -4,8 +4,8 @@ import time
 import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .logging_config import setup_logger
-from .routes import router
+from app.api.router import api_router
+from app.core.logging_config import setup_logger
 
 # Set up logger
 logger = setup_logger()
@@ -59,4 +59,4 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 app.add_middleware(LoggingMiddleware)
 
 # Include router
-app.include_router(router) 
+app.include_router(api_router) 

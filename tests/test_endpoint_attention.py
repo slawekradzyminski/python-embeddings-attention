@@ -17,7 +17,7 @@ def mock_model_service(monkeypatch):
         return MockModelService(*args, **kwargs)
     
     # Apply the mock
-    monkeypatch.setattr("app.routes.ModelService", mock_init)
+    monkeypatch.setattr("app.services.model_service.ModelService", mock_init)
 
 def test_attention_endpoint_basic():
     # given
@@ -55,11 +55,11 @@ def test_attention_endpoint_basic():
     # Check that the model name is correct
     assert data["model_name"] == "gpt2"
 
-@patch("app.routes.ModelService")
-def test_attention_endpoint_error_handling(mock_model_service_class):
+@patch("app.services.model_manager.ModelManager.get_model")
+def test_attention_endpoint_error_handling(mock_get_model):
     # given
-    # Make the ModelService constructor raise an exception
-    mock_model_service_class.side_effect = Exception("Failed to load model")
+    # Make the get_model method raise an exception
+    mock_get_model.side_effect = ValueError("Failed to load model")
     
     test_text = "Hello world"
     

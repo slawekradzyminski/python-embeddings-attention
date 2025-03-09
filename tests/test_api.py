@@ -13,7 +13,7 @@ class TestAPI:
         self.client = TestClient(app)
         
         # Mock the model service
-        self.patcher = patch("app.routes.ModelService", return_value=MockModelService())
+        self.patcher = patch("app.services.model_service.ModelService", return_value=MockModelService())
         self.mock_model_service = self.patcher.start()
         yield
         self.patcher.stop()
@@ -78,16 +78,11 @@ class TestAPI:
         assert "reduced_embeddings" not in data
         assert data["model_name"] == "gpt2"
     
-    @patch("app.routes.DimensionalityReducer")
-    def test_reduce_endpoint(self, mock_reducer_class):
+    @patch("app.services.reduction_service.DimensionalityReducer.reduce")
+    def test_reduce_endpoint(self, mock_reduce):
         # given
-        # Mock the reducer
-        mock_reducer_instance = MagicMock()
-        mock_reducer_class.return_value = mock_reducer_instance
-        
         # Mock the reduce method
-        reduced_embeddings = np.array([[0.1, 0.2], [0.3, 0.4]])
-        mock_reducer_instance.reduce.return_value = reduced_embeddings
+        mock_reduce.return_value = np.random.uniform(-1, 1, (2, 2))
         
         test_data = {
             "text": "Hello world",
