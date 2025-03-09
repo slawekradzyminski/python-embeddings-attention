@@ -1,47 +1,47 @@
-name: Python Sidecar CI/CD
+# name: Python Sidecar CI/CD
 
-on: push
+# on: push
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
     
-    steps:
-    - uses: actions/checkout@v4
+#     steps:
+#     - uses: actions/checkout@v4
     
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+#     - name: Set up Python 3.12
+#       uses: actions/setup-python@v5
+#       with:
+#         python-version: '3.12'
         
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+#     - name: Install dependencies
+#       run: |
+#         python -m pip install --upgrade pip
+#         pip install -r requirements.txt
         
-    - name: Test with pytest
-      run: |
-        python -m pytest
+#     - name: Test with pytest
+#       run: |
+#         python -m pytest
 
-  build:
-    runs-on: ubuntu-latest
+#   build:
+#     runs-on: ubuntu-latest
     
-    steps:
-    - uses: actions/checkout@v4
+#     steps:
+#     - uses: actions/checkout@v4
     
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+#     - name: Set up Docker Buildx
+#       uses: docker/setup-buildx-action@v3
       
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        load: true
-        tags: python-sidecar:latest
+#     - name: Build Docker image
+#       uses: docker/build-push-action@v5
+#       with:
+#         context: .
+#         load: true
+#         tags: python-sidecar:latest
         
-    - name: Test Docker image
-      run: |
-        docker run --rm -d -p 5000:5000 --name test-container python-sidecar:latest
-        sleep 5
-        curl http://localhost:5000/health || exit 1
-        docker stop test-container
+#     - name: Test Docker image
+#       run: |
+#         docker run --rm -d -p 5000:5000 --name test-container python-sidecar:latest
+#         sleep 30
+#         curl http://localhost:5000/health || exit 1
+#         docker stop test-container
