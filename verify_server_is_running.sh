@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to verify that the server is running
-echo "Waiting for server to start (max 30 seconds)..."
+echo "Waiting for server to start (max 60 seconds)..."
 MAX_WAIT=60
 WAIT_COUNT=0
 SERVER_UP=false
@@ -38,7 +38,7 @@ fi
 echo "Verifying models endpoint..."
 MODELS_RESPONSE=$(curl -s http://localhost:5000/models)
 if [[ $MODELS_RESPONSE == *"models"* ]]; then
-  echo "Models check passed: $MODELS_RESPONSE"
+  echo "Models check passed: $MODELS_RESPONSE (Note: models list may be empty until models are used)"
 else
   echo "Models check failed: $MODELS_RESPONSE"
   exit 1

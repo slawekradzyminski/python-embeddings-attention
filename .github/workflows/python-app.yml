@@ -29,6 +29,8 @@ jobs:
         
     - name: Start server and run end-to-end tests
       run: |
+        nohup uvicorn app.main:app --host 0.0.0.0 --port 5000 &
+        ./verify_server_is_running.sh
         CI=true ./e2e_test.sh
 
   build:

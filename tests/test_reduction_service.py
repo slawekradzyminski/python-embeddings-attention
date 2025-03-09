@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from app.reduction_service import DimensionalityReducer
+from app.services.reduction_service import DimensionalityReducer
 
 class TestDimensionalityReducer:
     def test_pca_2d_reduction(self):

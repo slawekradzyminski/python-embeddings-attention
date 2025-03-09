@@ -43,6 +43,19 @@ else
   exit 1
 fi
 
+# Check models endpoint after using a model
+echo "Checking models endpoint after using gpt2..."
+MODELS_RESPONSE=$(curl -s http://localhost:5000/models)
+if [[ $MODELS_RESPONSE == *"gpt2"* ]]; then
+  echo "✅ Models endpoint now includes gpt2: $MODELS_RESPONSE"
+else
+  echo "❌ Models endpoint should include gpt2 but doesn't: $MODELS_RESPONSE"
+  if [ -z "$CI" ]; then
+    ./kill_server.sh
+  fi
+  exit 1
+fi
+
 # Test attention endpoint
 echo "Testing attention endpoint..."
 ATTENTION_RESPONSE=$(curl -s -X POST http://localhost:5000/attention \

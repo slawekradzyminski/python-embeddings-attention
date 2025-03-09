@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from unittest.mock import patch, MagicMock
 
-from app.model_service import ModelService
+from app.services.model_service import ModelService
 
 
 class TestModelService:
@@ -11,10 +11,10 @@ class TestModelService:
     def test_get_embeddings_and_attention(self):
         # given
         # Mock the tokenizer and model
-        with patch("app.model_service._TOKENIZER_CACHE", {}), \
-             patch("app.model_service._MODEL_CACHE", {}), \
-             patch("app.model_service.AutoTokenizer") as mock_tokenizer, \
-             patch("app.model_service.AutoModel") as mock_model:
+        with patch("app.services.model_service._TOKENIZER_CACHE", {}), \
+             patch("app.services.model_service._MODEL_CACHE", {}), \
+             patch("app.services.model_service.AutoTokenizer") as mock_tokenizer, \
+             patch("app.services.model_service.AutoModel") as mock_model:
             
             # Set up mock tokenizer
             mock_tokenizer_instance = MagicMock()
