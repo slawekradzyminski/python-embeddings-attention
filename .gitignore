@@ -54,3 +54,6 @@ junit/
 
 # Docker
 .dockerignore 
+
+# Server PID file
+.server_pid 

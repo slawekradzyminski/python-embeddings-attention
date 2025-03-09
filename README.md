@@ -59,19 +59,75 @@ This service provides a REST API to extract per-token embeddings and multi-head 
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
    ```
+   
+   Alternatively, use the provided utility script:
+   ```bash
+   ./restart_server.sh
+   ```
+
+4. To stop the server:
+   ```bash
+   ./kill_server.sh
+   ```
+
+5. To run end-to-end tests:
+   ```bash
+   ./e2e_test.sh
+   ```
 
 ## API Endpoints
 
-### POST /process
+### POST /embeddings
 
-Process text through a transformer model and return tokens, embeddings, and attention weights.
+Process text through a transformer model and return tokens and embeddings.
+
+**Request Body:**
+```json
+{
+  "text": "Hello world, this is a test",
+  "model_name": "gpt2"
+}
+```
+
+**Response:**
+```json
+{
+  "tokens": ["Hello", "world", "this", "is", "a", "test"],
+  "embeddings": [[...], [...], ...],
+  "model_name": "gpt2"
+}
+```
+
+### POST /attention
+
+Process text through a transformer model and return tokens and attention weights.
+
+**Request Body:**
+```json
+{
+  "text": "Hello world, this is a test",
+  "model_name": "gpt2"
+}
+```
+
+**Response:**
+```json
+{
+  "tokens": ["Hello", "world", "this", "is", "a", "test"],
+  "attention": [[...], [...], ...],
+  "model_name": "gpt2"
+}
+```
+
+### POST /reduce
+
+Process text through a transformer model, get embeddings, and reduce their dimensionality.
 
 **Request Body:**
 ```json
 {
   "text": "Hello world, this is a test",
   "model_name": "gpt2",
-  "dimensionality_reduction": true,
   "reduction_method": "pca",
   "n_components": 2
 }
@@ -81,8 +137,6 @@ Process text through a transformer model and return tokens, embeddings, and atte
 ```json
 {
   "tokens": ["Hello", "world", "this", "is", "a", "test"],
-  "embeddings": [[...], [...], ...],
-  "attention": [[...], [...], ...],
   "reduced_embeddings": [[x1, y1], [x2, y2], ...],
   "model_name": "gpt2"
 }
@@ -96,7 +150,6 @@ For 3D visualization, set `n_components` to 3:
 {
   "text": "Hello world, this is a test",
   "model_name": "gpt2",
-  "dimensionality_reduction": true,
   "reduction_method": "pca",
   "n_components": 3
 }
@@ -105,8 +158,9 @@ For 3D visualization, set `n_components` to 3:
 **Response with 3D embeddings:**
 ```json
 {
+  "tokens": ["Hello", "world", "this", "is", "a", "test"],
   "reduced_embeddings": [[x1, y1, z1], [x2, y2, z2], ...],
-  ...
+  "model_name": "gpt2"
 }
 ```
 
@@ -143,8 +197,46 @@ python -m pytest
 The test suite includes:
 - Health check endpoint testing
 - Model listing endpoint testing
-- Text processing with and without dimensionality reduction
+- Tests for each endpoint (/embeddings, /attention, /reduce)
 - 2D and 3D dimensionality reduction testing
+
+### Utility Scripts
+
+The project includes several utility scripts to help with development and testing:
+
+#### Server Management
+
+- **restart_server.sh**: Starts (or restarts) the server on port 5000
+  ```bash
+  ./restart_server.sh
+  ```
+  This script:
+  - Kills any running uvicorn processes
+  - Starts the server on port 5000
+  - Waits until the server is up (max 30 seconds)
+  - Verifies the health and models endpoints are working
+  - Stores the server PID in `.server_pid` for future reference
+
+- **kill_server.sh**: Stops all uvicorn processes
+  ```bash
+  ./kill_server.sh
+  ```
+  This script:
+  - Checks for a `.server_pid` file and kills that specific process
+  - Kills any remaining uvicorn processes
+
+#### End-to-End Testing
+
+- **e2e_test.sh**: Runs end-to-end tests on all endpoints
+  ```bash
+  ./e2e_test.sh
+  ```
+  This script:
+  - Starts the server using `restart_server.sh`
+  - Tests all domain endpoints (embeddings, attention, reduce) with realistic test data
+  - Verifies that responses are successful and make sense
+  - Checks the logs to ensure everything was processed correctly
+  - Stops the server using `kill_server.sh`
 
 ## CI/CD with GitHub Actions
 
@@ -179,15 +271,43 @@ WebClient client = WebClient.builder()
     .baseUrl("http://python-sidecar:5000")
     .build();
 
-Map<String, Object> requestBody = Map.of(
+// For embeddings only
+Map<String, Object> embeddingsRequest = Map.of(
     "text", "Hello world, this is a test",
-    "dimensionality_reduction", true,
+    "model_name", "gpt2"
+);
+
+Map embeddingsResponse = client.post()
+    .uri("/embeddings")
+    .bodyValue(embeddingsRequest)
+    .retrieve()
+    .bodyToMono(Map.class)
+    .block();
+
+// For attention only
+Map<String, Object> attentionRequest = Map.of(
+    "text", "Hello world, this is a test",
+    "model_name", "gpt2"
+);
+
+Map attentionResponse = client.post()
+    .uri("/attention")
+    .bodyValue(attentionRequest)
+    .retrieve()
+    .bodyToMono(Map.class)
+    .block();
+
+// For dimensionality reduction
+Map<String, Object> reduceRequest = Map.of(
+    "text", "Hello world, this is a test",
+    "model_name", "gpt2",
+    "reduction_method", "pca",
     "n_components", 3  // For 3D visualization
 );
 
-Map response = client.post()
-    .uri("/process")
-    .bodyValue(requestBody)
+Map reduceResponse = client.post()
+    .uri("/reduce")
+    .bodyValue(reduceRequest)
     .retrieve()
     .bodyToMono(Map.class)
     .block();

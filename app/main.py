@@ -1,108 +1,62 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any, Union
-import numpy as np
+from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+import time
+import uuid
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from model_service import ModelService
+from app.api.router import api_router
+from app.core.logging_config import setup_logger
 
+# Set up logger
+logger = setup_logger()
+
+# Create FastAPI app
 app = FastAPI(
-    title="Embeddings and Attention API",
-    description="API for retrieving token embeddings and attention weights from transformer models",
+    title="Python Sidecar for Token Embeddings and Attention",
+    description="API for extracting token-level embeddings and attention from transformer models",
     version="1.0.0"
 )
 
-# Initialize with default model
-model_service = ModelService("gpt2")
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Cache for models to avoid reloading
-model_cache = {"gpt2": model_service}
-
-
-class RequestData(BaseModel):
-    text: str
-    model_name: Optional[str] = "gpt2"
-    dimensionality_reduction: Optional[bool] = False
-    reduction_method: Optional[str] = "pca"
-    n_components: Optional[int] = 2  # Default is 2D, but can be set to 3 for 3D visualization
-
-
-class ResponseData(BaseModel):
-    tokens: List[str]
-    embeddings: List[List[float]]
-    attention: List[List[List[List[float]]]]
-    reduced_embeddings: Optional[List[List[float]]] = None
-    model_name: str
-
-
-@app.post("/process", response_model=ResponseData)
-def process_text(data: RequestData) -> Dict[str, Any]:
-    """
-    Process text through a transformer model and return tokens, embeddings, and attention weights.
-    
-    Args:
-        data: Request data containing text and optional parameters
+# Custom middleware for request/response logging
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())
         
-    Returns:
-        Dictionary with tokens, embeddings, attention weights, and optional reduced embeddings
-    """
-    # Get or initialize model
-    if data.model_name not in model_cache:
+        # Log request method and path
+        logger.info(f"Request {request_id}: {request.method} {request.url.path}")
+        
+        # Record request start time
+        start_time = time.time()
+        
+        # Process the request
         try:
-            model_cache[data.model_name] = ModelService(data.model_name)
+            response = await call_next(request)
+            
+            # Calculate and log processing time
+            process_time = time.time() - start_time
+            logger.info(f"Response {request_id}: status={response.status_code}, time={process_time:.4f}s")
+            
+            # Add custom header with processing time
+            response.headers["X-Process-Time"] = str(process_time)
+            return response
+            
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to load model {data.model_name}: {str(e)}")
-    
-    service = model_cache[data.model_name]
-    
-    # Process text
-    try:
-        tokens, hidden_states, attentions = service.get_embeddings_and_attention(data.text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing text: {str(e)}")
-    
-    # Optional dimensionality reduction
-    reduced_embeddings = None
-    if data.dimensionality_reduction:
-        try:
-            reduced = service.dimensionality_reduction(
-                hidden_states, 
-                method=data.reduction_method,
-                n_components=data.n_components
-            )
-            reduced_embeddings = reduced.tolist()
-        except Exception as e:
-            # Don't fail the whole request if reduction fails
-            pass
-    
-    # Prepare response
-    response = {
-        "tokens": tokens,
-        "embeddings": hidden_states.tolist(),
-        "attention": attentions,
-        "reduced_embeddings": reduced_embeddings,
-        "model_name": data.model_name
-    }
-    
-    return response
+            # Log any exceptions
+            process_time = time.time() - start_time
+            logger.error(f"Error {request_id}: {str(e)}, time={process_time:.4f}s")
+            raise
 
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
 
-@app.get("/models")
-def list_available_models() -> Dict[str, List[str]]:
-    """
-    List available pre-loaded models.
-    
-    Returns:
-        Dictionary with list of model names
-    """
-    return {"models": list(model_cache.keys())}
-
-
-@app.get("/health")
-def health_check() -> Dict[str, str]:
-    """
-    Simple health check endpoint.
-    
-    Returns:
-        Status message
-    """
-    return {"status": "healthy"} 
+# Include router
+app.include_router(api_router) 

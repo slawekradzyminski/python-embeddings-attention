@@ -23,6 +23,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app/ ./app
 
+# Copy utility scripts
+COPY restart_server.sh kill_server.sh e2e_test.sh verify_server_is_running.sh ./
+RUN chmod +x restart_server.sh kill_server.sh e2e_test.sh verify_server_is_running.sh
+
 # Expose the application port
 EXPOSE 5000
 

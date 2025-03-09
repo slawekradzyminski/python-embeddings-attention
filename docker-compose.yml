@@ -11,6 +11,10 @@ services:
       - "5000:5000"
     volumes:
       - ./app:/app/app
+      - ./restart_server.sh:/app/restart_server.sh
+      - ./kill_server.sh:/app/kill_server.sh
+      - ./e2e_test.sh:/app/e2e_test.sh
+      - ./verify_server_is_running.sh:/app/verify_server_is_running.sh
     environment:
       - PYTHONUNBUFFERED=1
       - TRANSFORMERS_CACHE=/app/.cache/huggingface

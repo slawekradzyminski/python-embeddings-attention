@@ -43,20 +43,4 @@ class MockModelService:
             layer_attention = np.random.rand(num_heads, len(tokens), len(tokens)).tolist()
             attentions.append(layer_attention)
         
-        return tokens, embeddings, attentions
-    
-    def dimensionality_reduction(self, embeddings: np.ndarray, method: str = "pca", 
-                               n_components: int = 2) -> np.ndarray:
-        """
-        Mock dimensionality reduction that returns random 2D coordinates.
-        
-        Args:
-            embeddings: Token embeddings
-            method: Reduction method (ignored in mock)
-            n_components: Number of dimensions (ignored in mock)
-            
-        Returns:
-            Random 2D coordinates
-        """
-        num_tokens = embeddings.shape[0]
-        return np.random.randn(num_tokens, n_components).astype(np.float32) 
+        return tokens, embeddings, attentions 
