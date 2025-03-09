@@ -2,9 +2,6 @@ import torch
 from transformers import AutoModel, AutoTokenizer
 import numpy as np
 from typing import List, Tuple, Any, Dict, Optional
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.decomposition import PCA
-from umap import UMAP
 
 # Global caches to avoid reloading models and tokenizers
 _MODEL_CACHE: Dict[str, Any] = {}
@@ -49,57 +46,17 @@ class ModelService:
         
         # Run model inference
         with torch.no_grad():
-            outputs = self.model(**inputs)
+            outputs = self.model(**inputs, output_attentions=True)
         
-        # Extract per-token hidden states
-        hidden_states = outputs.last_hidden_state[0].cpu().numpy()  # Shape: [seq_len, hidden_dim]
+        # Get token embeddings (last hidden state)
+        hidden_states = outputs.last_hidden_state[0].cpu().numpy()  # Remove batch dimension
         
-        # Extract attentions
-        attentions = [att[0].cpu().numpy().tolist() for att in outputs.attentions]  # [layers, heads, seq_len, seq_len]
-
-        # Convert token IDs back to actual tokens
-        tokens = self.tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])
+        # Get attention weights
+        # Format: list of tensors, one per layer, each with shape [batch_size, num_heads, seq_len, seq_len]
+        attentions = [layer[0].cpu().numpy().tolist() for layer in outputs.attentions]  # Remove batch dimension
+        
+        # Get token strings
+        token_ids = inputs.input_ids[0].tolist()
+        tokens = self.tokenizer.convert_ids_to_tokens(token_ids)
         
         return tokens, hidden_states, attentions
-    
-    def dimensionality_reduction(self, embeddings: np.ndarray, method: str = "pca", n_components: int = 2) -> np.ndarray:
-        """
-        Reduce dimensionality of embeddings for visualization.
-        
-        Args:
-            embeddings: Token embeddings to reduce
-            method: Reduction method ('pca' or 'umap')
-            n_components: Number of dimensions to reduce to
-            
-        Returns:
-            Reduced embeddings as NumPy array, normalized to range [-1, 1]
-        """
-        # Ensure we have enough data points for reduction
-        seq_len, hidden_dim = embeddings.shape
-        if seq_len < n_components:
-            raise ValueError(f"Cannot reduce {seq_len} tokens to {n_components} dimensions. Not enough tokens.")
-
-        # Standardize embeddings (zero mean, unit variance)
-        scaler = StandardScaler()
-        embeddings_normalized = scaler.fit_transform(embeddings)
-
-        # Apply PCA or UMAP
-        try:
-            if method == "pca":
-                reducer = PCA(n_components=n_components)
-                reduced = reducer.fit_transform(embeddings_normalized)
-            elif method == "umap":
-                reducer = UMAP(n_components=n_components)
-                reduced = reducer.fit_transform(embeddings_normalized)
-            else:
-                raise ValueError(f"Unsupported dimensionality reduction method: {method}")
-            
-            # Normalize the reduced embeddings to range [-1, 1]
-            normalizer = MinMaxScaler(feature_range=(-1, 1))
-            reduced = normalizer.fit_transform(reduced)
-
-        except Exception as e:
-            print(f"[Error] Dimensionality reduction failed: {str(e)}. Returning zeros.")
-            reduced = np.zeros((seq_len, n_components))  # Return safe default
-
-        return reduced

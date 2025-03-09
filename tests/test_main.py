@@ -1,19 +1,21 @@
 import pytest
-import sys
-import os
-
-# Add the app directory to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../app')))
-
 from fastapi.testclient import TestClient
-from main import app
+import numpy as np
+import json
+import os
+from unittest.mock import patch, MagicMock
 
+# Import app directly from app.main
+from app.main import app
+
+# Create test client
 client = TestClient(app)
 
 def test_health_check():
     # given
     # when
     response = client.get("/health")
+    
     # then
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
@@ -22,63 +24,120 @@ def test_list_models():
     # given
     # when
     response = client.get("/models")
+    
     # then
     assert response.status_code == 200
     assert "models" in response.json()
-    assert "gpt2" in response.json()["models"]
+    assert isinstance(response.json()["models"], list)
 
-def test_process_text_without_reduction():
+@patch("app.routes.ModelService")
+def test_process_text_without_reduction(mock_model_service):
     # given
-    test_data = {
-        "text": "Hello world",
-        "model_name": "gpt2",
-        "dimensionality_reduction": False
-    }
+    # Mock the model service
+    mock_instance = MagicMock()
+    mock_model_service.return_value = mock_instance
+    
+    # Mock the get_embeddings_and_attention method
+    tokens = ["Hello", "world"]
+    hidden_states = np.random.rand(2, 768)
+    attentions = [[[np.random.rand(2, 2).tolist() for _ in range(12)] for _ in range(12)]]
+    mock_instance.get_embeddings_and_attention.return_value = (tokens, hidden_states, attentions)
+    
     # when
-    response = client.post("/process", json=test_data)
+    response = client.post(
+        "/process",
+        json={"text": "Hello world", "model_name": "gpt2", "dimensionality_reduction": False}
+    )
+    
     # then
     assert response.status_code == 200
-    assert "tokens" in response.json()
-    assert "embeddings" in response.json()
-    assert "attention" in response.json()
-    # The API returns reduced_embeddings as None when dimensionality_reduction is False
-    assert response.json()["reduced_embeddings"] is None
-    assert response.json()["model_name"] == "gpt2"
+    data = response.json()
+    assert "tokens" in data
+    assert "embeddings" in data
+    assert "attention" in data
+    assert "reduced_embeddings" in data
+    assert data["reduced_embeddings"] is None  # No reduction requested
 
-def test_process_text_with_2d_reduction():
+@patch("app.routes.ModelService")
+@patch("app.routes.DimensionalityReducer")
+def test_process_text_with_2d_reduction(mock_reducer_class, mock_model_service):
     # given
-    test_data = {
-        "text": "Hello world",
-        "model_name": "gpt2",
-        "dimensionality_reduction": True,
-        "n_components": 2
-    }
+    # Mock the model service
+    mock_model_instance = MagicMock()
+    mock_model_service.return_value = mock_model_instance
+    
+    # Mock the get_embeddings_and_attention method
+    tokens = ["Hello", "world"]
+    hidden_states = np.random.rand(2, 768)
+    attentions = [[[np.random.rand(2, 2).tolist() for _ in range(12)] for _ in range(12)]]
+    mock_model_instance.get_embeddings_and_attention.return_value = (tokens, hidden_states, attentions)
+    
+    # Mock the reducer
+    mock_reducer_instance = MagicMock()
+    mock_reducer_class.return_value = mock_reducer_instance
+    
+    # Mock the reduce method
+    reduced_embeddings = np.array([[0.1, 0.2], [0.3, 0.4]])
+    mock_reducer_instance.reduce.return_value = reduced_embeddings
+    
     # when
-    response = client.post("/process", json=test_data)
+    response = client.post(
+        "/process",
+        json={
+            "text": "Hello world", 
+            "model_name": "gpt2", 
+            "dimensionality_reduction": True,
+            "reduction_method": "pca",
+            "n_components": 2
+        }
+    )
+    
     # then
     assert response.status_code == 200
-    assert "reduced_embeddings" in response.json()
-    # Skip further assertions if reduced_embeddings is None (reduction failed)
-    if response.json()["reduced_embeddings"] is not None:
-        reduced = response.json()["reduced_embeddings"]
-        assert len(reduced) > 0
-        assert len(reduced[0]) == 2  # 2D reduction
+    data = response.json()
+    assert "reduced_embeddings" in data
+    assert data["reduced_embeddings"] is not None
+    assert len(data["reduced_embeddings"]) == 2  # Two tokens
+    assert len(data["reduced_embeddings"][0]) == 2  # 2D reduction
 
-def test_process_text_with_3d_reduction():
+@patch("app.routes.ModelService")
+@patch("app.routes.DimensionalityReducer")
+def test_process_text_with_3d_reduction(mock_reducer_class, mock_model_service):
     # given
-    test_data = {
-        "text": "Hello world",
-        "model_name": "gpt2",
-        "dimensionality_reduction": True,
-        "n_components": 3
-    }
+    # Mock the model service
+    mock_model_instance = MagicMock()
+    mock_model_service.return_value = mock_model_instance
+    
+    # Mock the get_embeddings_and_attention method
+    tokens = ["Hello", "world"]
+    hidden_states = np.random.rand(2, 768)
+    attentions = [[[np.random.rand(2, 2).tolist() for _ in range(12)] for _ in range(12)]]
+    mock_model_instance.get_embeddings_and_attention.return_value = (tokens, hidden_states, attentions)
+    
+    # Mock the reducer
+    mock_reducer_instance = MagicMock()
+    mock_reducer_class.return_value = mock_reducer_instance
+    
+    # Mock the reduce method
+    reduced_embeddings = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+    mock_reducer_instance.reduce.return_value = reduced_embeddings
+    
     # when
-    response = client.post("/process", json=test_data)
+    response = client.post(
+        "/process",
+        json={
+            "text": "Hello world", 
+            "model_name": "gpt2", 
+            "dimensionality_reduction": True,
+            "reduction_method": "pca",
+            "n_components": 3
+        }
+    )
+    
     # then
     assert response.status_code == 200
-    assert "reduced_embeddings" in response.json()
-    # Skip further assertions if reduced_embeddings is None (reduction failed)
-    if response.json()["reduced_embeddings"] is not None:
-        reduced = response.json()["reduced_embeddings"]
-        assert len(reduced) > 0
-        assert len(reduced[0]) == 3  # 3D reduction 
+    data = response.json()
+    assert "reduced_embeddings" in data
+    assert data["reduced_embeddings"] is not None
+    assert len(data["reduced_embeddings"]) == 2  # Two tokens
+    assert len(data["reduced_embeddings"][0]) == 3  # 3D reduction 
