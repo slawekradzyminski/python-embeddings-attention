@@ -10,7 +10,16 @@ from app.services.model_manager import ModelManager
 
 router = APIRouter()
 
-@router.post("/attention", response_model=AttentionResponse)
+@router.post("/attention", response_model=AttentionResponse,
+             summary="Get attention weights",
+             description="Process text through a transformer model and return tokens and multi-head attention weights.",
+             response_description="Tokens and their attention weights from all layers and heads",
+             status_code=200,
+             responses={
+                 200: {"description": "Successful response with tokens and attention weights"},
+                 400: {"description": "Bad request, invalid model name or parameters"},
+                 500: {"description": "Internal server error during processing"}
+             })
 async def get_attention(
     data: AttentionRequest,
     model_manager: ModelManager = Depends(get_model_manager),
@@ -19,11 +28,18 @@ async def get_attention(
     """
     Process text through a transformer model and return tokens and attention weights.
     
+    The endpoint tokenizes the input text and extracts the multi-head attention weights
+    from all layers of the specified transformer model. These weights show how each token
+    attends to other tokens in the sequence.
+    
     Args:
         data: Request data containing text and model name
         
     Returns:
-        Dictionary with tokens and attention weights
+        Dictionary with tokens, attention weights, and model name
+        
+    Raises:
+        HTTPException: If model loading fails or text processing encounters an error
     """
     request_id = str(uuid.uuid4())
     logger.info(f"Processing text for attention with model {data.model_name}")

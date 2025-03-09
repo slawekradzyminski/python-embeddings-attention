@@ -11,7 +11,16 @@ from app.services.model_manager import ModelManager
 
 router = APIRouter()
 
-@router.post("/embeddings", response_model=EmbeddingsResponse)
+@router.post("/embeddings", response_model=EmbeddingsResponse, 
+             summary="Get token embeddings",
+             description="Process text through a transformer model and return tokens and their corresponding embeddings.",
+             response_description="Tokens and their embeddings from the model",
+             status_code=200,
+             responses={
+                 200: {"description": "Successful response with tokens and embeddings"},
+                 400: {"description": "Bad request, invalid model name or parameters"},
+                 500: {"description": "Internal server error during processing"}
+             })
 async def get_embeddings(
     data: EmbeddingsRequest,
     model_manager: ModelManager = Depends(get_model_manager),
@@ -20,11 +29,17 @@ async def get_embeddings(
     """
     Process text through a transformer model and return tokens and embeddings.
     
+    The endpoint tokenizes the input text and extracts the final hidden states (embeddings)
+    for each token from the specified transformer model.
+    
     Args:
         data: Request data containing text and model name
         
     Returns:
-        Dictionary with tokens and embeddings
+        Dictionary with tokens, embeddings, and model name
+        
+    Raises:
+        HTTPException: If model loading fails or text processing encounters an error
     """
     request_id = str(uuid.uuid4())
     logger.info(f"Processing text for embeddings with model {data.model_name}")

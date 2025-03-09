@@ -186,6 +186,75 @@ Health check endpoint.
 }
 ```
 
+## API Documentation with Swagger UI
+
+The API is documented using Swagger UI, which provides an interactive interface to explore and test the API endpoints.
+
+### Accessing Swagger UI
+
+Once the service is running, you can access the Swagger UI at:
+
+```
+http://localhost:5000/docs
+```
+
+This interface allows you to:
+- View all available endpoints
+- See request and response schemas
+- Test endpoints directly from the browser
+- Understand parameter requirements
+
+### Example Swagger UI
+
+The Swagger UI provides a clean interface to explore and test the API:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  Python Sidecar for Token Embeddings and Attention 1.0.0                │
+│                                                                         │
+│  API for extracting token-level embeddings and attention from           │
+│  transformer models                                                     │
+│                                                                         │
+│  [ embeddings ]                                                         │
+│    POST /embeddings Get token embeddings                                │
+│                                                                         │
+│  [ attention ]                                                          │
+│    POST /attention Get attention weights                                │
+│                                                                         │
+│  [ reduce ]                                                             │
+│    POST /reduce Get dimensionally reduced embeddings                    │
+│                                                                         │
+│  [ models ]                                                             │
+│    GET /models List available models                                    │
+│                                                                         │
+│  [ health ]                                                             │
+│    GET /health Health check                                             │
+│                                                                         │
+│  [ logs ]                                                               │
+│    GET /logs Get recent logs                                            │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### OpenAPI Specification
+
+The raw OpenAPI specification is available at:
+
+```
+http://localhost:5000/openapi.json
+```
+
+This JSON file can be imported into API tools like Postman or used for client code generation.
+
+### ReDoc Alternative
+
+An alternative documentation UI is available at:
+
+```
+http://localhost:5000/redoc
+```
+
 ## Testing
 
 Run tests with pytest:
@@ -264,51 +333,3 @@ services:
       - my-private-ntwk
 ```
 
-## Java Client Example
-
-```java
-WebClient client = WebClient.builder()
-    .baseUrl("http://python-sidecar:5000")
-    .build();
-
-// For embeddings only
-Map<String, Object> embeddingsRequest = Map.of(
-    "text", "Hello world, this is a test",
-    "model_name", "gpt2"
-);
-
-Map embeddingsResponse = client.post()
-    .uri("/embeddings")
-    .bodyValue(embeddingsRequest)
-    .retrieve()
-    .bodyToMono(Map.class)
-    .block();
-
-// For attention only
-Map<String, Object> attentionRequest = Map.of(
-    "text", "Hello world, this is a test",
-    "model_name", "gpt2"
-);
-
-Map attentionResponse = client.post()
-    .uri("/attention")
-    .bodyValue(attentionRequest)
-    .retrieve()
-    .bodyToMono(Map.class)
-    .block();
-
-// For dimensionality reduction
-Map<String, Object> reduceRequest = Map.of(
-    "text", "Hello world, this is a test",
-    "model_name", "gpt2",
-    "reduction_method", "pca",
-    "n_components", 3  // For 3D visualization
-);
-
-Map reduceResponse = client.post()
-    .uri("/reduce")
-    .bodyValue(reduceRequest)
-    .retrieve()
-    .bodyToMono(Map.class)
-    .block();
-``` 

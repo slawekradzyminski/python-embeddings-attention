@@ -14,7 +14,18 @@ logger = setup_logger()
 app = FastAPI(
     title="Python Sidecar for Token Embeddings and Attention",
     description="API for extracting token-level embeddings and attention from transformer models",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",  # Swagger UI
+    redoc_url="/redoc",  # Redoc UI
+    openapi_url="/openapi.json",  # OpenAPI JSON spec
+    contact={
+        "name": "Python Sidecar Team",
+        "url": "https://github.com/slawekradzyminski/python-embeddings-attention",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    }
 )
 
 # Add CORS middleware

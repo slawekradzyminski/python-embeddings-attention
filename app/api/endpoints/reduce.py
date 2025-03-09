@@ -12,20 +12,35 @@ from app.services.reduction_service import DimensionalityReducer
 
 router = APIRouter()
 
-@router.post("/reduce", response_model=ReduceResponse)
+@router.post("/reduce", response_model=ReduceResponse,
+             summary="Get dimensionally reduced embeddings",
+             description="Process text through a transformer model, extract embeddings, and reduce their dimensionality.",
+             response_description="Tokens and their dimensionally reduced embeddings",
+             status_code=200,
+             responses={
+                 200: {"description": "Successful response with tokens and reduced embeddings"},
+                 400: {"description": "Bad request, invalid model name, reduction method, or parameters"},
+                 500: {"description": "Internal server error during processing"}
+             })
 async def reduce_embeddings(
     data: ReduceRequest,
     model_manager: ModelManager = Depends(get_model_manager),
     logger = Depends(get_logger)
 ) -> Dict[str, Any]:
     """
-    Process text through a transformer model, get embeddings, and reduce their dimensionality.
+    Process text through a transformer model and return tokens with reduced-dimension embeddings.
+    
+    The endpoint tokenizes the input text, extracts embeddings, and applies dimensionality
+    reduction (PCA or UMAP) to create 2D or 3D representations suitable for visualization.
     
     Args:
-        data: Request data containing text, model name, and reduction parameters
+        data: Request data containing text, model name, reduction method, and number of components
         
     Returns:
-        Dictionary with tokens and reduced embeddings
+        Dictionary with tokens, reduced embeddings, and model name
+        
+    Raises:
+        HTTPException: If model loading fails, reduction method is invalid, or processing encounters an error
     """
     request_id = str(uuid.uuid4())
     logger.info(f"Processing text for dimensionality reduction with model {data.model_name}")
