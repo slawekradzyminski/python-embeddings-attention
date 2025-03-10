@@ -13,4 +13,8 @@ class ReduceRequest(BaseModel):
     text: str = Field(..., description="The input text to process through the model")
     model_name: Optional[str] = Field("gpt2", description="The name of the transformer model to use (default: gpt2)")
     reduction_method: Optional[str] = Field("pca", description="Dimensionality reduction method to use: 'pca' or 'umap' (default: pca)")
-    n_components: Optional[int] = Field(2, description="Number of dimensions to reduce to, typically 2 or 3 (default: 2)") 
+    n_components: Optional[int] = Field(2, description="Number of dimensions to reduce to, typically 2 or 3 (default: 2)")
+
+class TokenizeRequest(BaseModel):
+    text: str = Field(..., description="The input text to split into tokens")
+    model_name: Optional[str] = Field("gpt2", description="The name of the transformer model's tokenizer to use (default: gpt2)") 

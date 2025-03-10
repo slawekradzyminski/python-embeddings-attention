@@ -16,6 +16,10 @@ class ReduceResponse(BaseModel):
     reduced_embeddings: List[List[float]] = Field(..., description="Dimensionally reduced token embeddings, shape: [num_tokens, n_components]")
     model_name: str = Field(..., description="Name of the transformer model used")
 
+class TokenizeResponse(BaseModel):
+    tokens: List[str] = Field(..., description="List of tokens derived from the input text")
+    model_name: str = Field(..., description="Name of the transformer model/tokenizer used")
+
 class ModelsResponse(BaseModel):
     models: List[str] = Field(..., description="List of available transformer models")
 
