@@ -43,6 +43,22 @@ else
   exit 1
 fi
 
+# Test tokenize endpoint
+echo "Testing tokenize endpoint..."
+TOKENIZE_RESPONSE=$(curl -s -X POST http://localhost:5000/tokenize \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This is a test sentence for tokenization.", "model_name": "gpt2"}')
+
+if [[ $TOKENIZE_RESPONSE == *"tokens"* ]] && [[ $TOKENIZE_RESPONSE == *"model_name"* ]]; then
+  echo "✅ Tokenize endpoint test passed"
+else
+  echo "❌ Tokenize endpoint test failed: $TOKENIZE_RESPONSE"
+  if [ -z "$CI" ]; then
+    ./kill_server.sh
+  fi
+  exit 1
+fi
+
 # Check models endpoint after using a model
 echo "Checking models endpoint after using gpt2..."
 MODELS_RESPONSE=$(curl -s http://localhost:5000/models)
@@ -92,7 +108,7 @@ fi
 echo "Checking logs..."
 LOGS_RESPONSE=$(curl -s "http://localhost:5000/logs?lines=50")
 
-if [[ $LOGS_RESPONSE == *"embeddings"* ]] && [[ $LOGS_RESPONSE == *"attention"* ]] && [[ $LOGS_RESPONSE == *"dimensionality reduction"* ]]; then
+if [[ $LOGS_RESPONSE == *"embeddings"* ]] && [[ $LOGS_RESPONSE == *"attention"* ]] && [[ $LOGS_RESPONSE == *"dimensionality reduction"* ]] && [[ $LOGS_RESPONSE == *"tokenizing text"* ]]; then
   echo "✅ Logs verification passed"
 else
   echo "❌ Logs verification failed"

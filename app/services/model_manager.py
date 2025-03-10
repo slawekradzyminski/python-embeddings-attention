@@ -28,6 +28,12 @@ class ModelManager:
         """Get tokens and embeddings for dimensionality reduction"""
         return self.get_embeddings(text, model_name)
     
+    def tokenize_only(self, text: str, model_name: str) -> List[str]:
+        """Get tokens for text using specified model's tokenizer"""
+        model = self.get_model(model_name)
+        tokens = model.tokenize_text(text)
+        return tokens
+    
     def list_models(self) -> List[str]:
         """List all available models"""
         return list(self.model_cache.keys()) 

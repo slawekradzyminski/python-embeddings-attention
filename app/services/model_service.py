@@ -60,3 +60,18 @@ class ModelService:
         tokens = self.tokenizer.convert_ids_to_tokens(token_ids)
         
         return tokens, hidden_states, attentions
+
+    def tokenize_text(self, text: str) -> List[str]:
+        """
+        Tokenize text using the model's tokenizer without computing embeddings or attention.
+        
+        Args:
+            text: Input text to tokenize
+            
+        Returns:
+            List of token strings
+        """
+        inputs = self.tokenizer(text, add_special_tokens=False, return_tensors="pt")
+        token_ids = inputs.input_ids[0].tolist()
+        tokens = self.tokenizer.convert_ids_to_tokens(token_ids)
+        return tokens

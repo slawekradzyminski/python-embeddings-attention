@@ -44,3 +44,24 @@ class MockModelService:
             attentions.append(layer_attention)
         
         return tokens, embeddings, attentions 
+
+    def tokenize_text(self, text: str) -> List[str]:
+        """
+        Return mock tokens for the given text.
+        
+        Args:
+            text: Input text
+            
+        Returns:
+            Mock tokens
+        """
+        # Split text into mock tokens
+        words = text.split()
+        tokens = []
+        for word in words:
+            # Simulate subword tokenization by splitting longer words
+            if len(word) > 5:
+                tokens.extend([word[:3], word[3:]])
+            else:
+                tokens.append(word)
+        return tokens 

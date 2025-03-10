@@ -98,6 +98,26 @@ Process text through a transformer model and return tokens and embeddings.
 }
 ```
 
+### POST /tokenize
+
+Split input text into tokens using the specified tokenizer.
+
+**Request Body:**
+```json
+{
+  "text": "Hello world, this is a test!",
+  "model_name": "gpt2"
+}
+```
+
+**Response:**
+```json
+{
+  "tokens": ["Hello", "world", "this", "is", "a", "test", "!"],
+  "model_name": "gpt2"
+}
+```
+
 ### POST /attention
 
 Process text through a transformer model and return tokens and attention weights.
@@ -218,6 +238,9 @@ The Swagger UI provides a clean interface to explore and test the API:
 │                                                                         │
 │  [ embeddings ]                                                         │
 │    POST /embeddings Get token embeddings                                │
+│                                                                         │
+│  [ tokenize ]                                                             │
+│    POST /tokenize Split input text into tokens                           │
 │                                                                         │
 │  [ attention ]                                                          │
 │    POST /attention Get attention weights                                │
